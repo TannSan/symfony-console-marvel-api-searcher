@@ -1,8 +1,8 @@
 #!/usr/bin/env php
-<?php 
+<?php
 
-require_once __DIR__ . '/vendor/autoload.php'; 
- 
+require_once __DIR__ . '/vendor/autoload.php';
+
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -13,12 +13,9 @@ use MarvelConsole\Connector\MarvelConnector;
 
 // TODO: Complete Marvel API guzzle connector
 // TODO: Add more PHP Unit tests for new connector functions
-// TODO: Error handling for character and data type command line arguments
 // TODO: The Marvel Characters call returns a list of characters so could present it as a user selectable option
 //       - Update - I tried a few shared character names and the API seems to just return them as one character i.e. Iron Man, Thor, Marvel Boy
 //       - Needs more research/testing - https://screenrant.com/marvel-comics-heroes-same-names/
-// TODO: Check that they have entered a valid data type - comics, events, series and stories
-// TODO: Special handling for non-plurals e.g. user types "event" so it is renamed to "events" in Marvel API call
 // TODO: Display results in tabular format
 // TODO: Error handling for if character does not exist in API
 // TODO: Include Marvel Copyright message with search results - "Data provided by Marvel. © 2014 Marvel"
@@ -36,11 +33,11 @@ use MarvelConsole\Connector\MarvelConnector;
 $dotenv = new Dotenv();
 $dotenv->load(__DIR__.'/.env');
 
-if(!getenv('PUBLIC_KEY') || !getenv('PRIVATE_KEY'))        
+if(!getenv('PUBLIC_KEY') || !getenv('PRIVATE_KEY'))
 {
     $io = new SymfonyStyle(new StringInput(''), new ConsoleOutput());
     $io->newLine();
-    $io->error('You must set your public and private keys in the .env file.');    
+    $io->error('You must set your public and private keys in the .env file.');
     return;
 }
 
