@@ -1,8 +1,28 @@
 {
+    "name": "symfony-console-marvel-api-searcher",
+    "description": "PHP console client to search the Marvel API and produce a CSV document with the results",
+    "authors": [
+        {
+            "name": "Tann San",
+            "email": "github@ninethree.co.uk"
+        }    
+    ],
+    "keywords": ["continuum", "comics", "marvel", "console", "search", "rest"],
+    "license": "MIT",
     "require": {
         "symfony/console": "^4.0",
         "symfony/dotenv": "^4.0",
         "guzzlehttp/guzzle": "~6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "": "tests/"
+        }
     },
     "require-dev": {
         "symfony/phpunit-bridge": "^4.0"
