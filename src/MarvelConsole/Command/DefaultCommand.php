@@ -9,6 +9,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Input\ArrayInput;
 use MarvelConsole\Connector\ConnectorInterface;
 
 class DefaultCommand extends Command
@@ -16,6 +17,7 @@ class DefaultCommand extends Command
     private $connector;
     private const DATA_TYPES = array('Comics', 'Events', 'Series', 'Stories');
     private const DATA_TYPES_LC = array('comics', 'events', 'series', 'stories');
+    private $is_first_time = true;
 
     public function setConnector(ConnectorInterface $connector)
     {
@@ -34,8 +36,12 @@ class DefaultCommand extends Command
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
-        $io->newLine();
-        $io->title(sprintf(' Welcome to the Continuum Comics %s CSV generator ', $this->connector->getName()));
+        if($this->is_first_time)
+            {
+                $io->newLine();
+                $io->title(sprintf(' Welcome to the Continuum Comics %s CSV generator ', $this->connector->getName()));
+                $this->is_first_time = false;
+            }
     }
 
     /**
@@ -63,16 +69,17 @@ class DefaultCommand extends Command
 
         if(!$data_type || in_array($data_type, $this::DATA_TYPES_LC) === false)
             {
-                $helper = $this->getHelper('question');
                 $question = new ChoiceQuestion(' Please select a data type to retrieve', $this::DATA_TYPES, $this::DATA_TYPES[0]);
                 $question->setErrorMessage("\n\n [ERROR] Selection %s is not a valid choice\n");
                 $question->setNormalizer(function ($value) {
-                    if($value && substr($value, -1) !== 's')
+                    if($value && !is_numeric($value) && substr($value, -1) !== 's')
                         $value .= 's';
+                    else if($value == "0")
+                        $value = $this::DATA_TYPES[0];
 
                     return $value ? trim(ucfirst(strtolower($value))) : '';
                 });
-                $input->setArgument('type', strtolower($helper->ask($input, $output, $question)));
+                $input->setArgument('type', strtolower($this->getHelper('question')->ask($input, $output, $question)));
 
                 /*
                 // Had to go with the ChoiceQuestion option above so could use the setNormalize method so when they type comics it accepts it even though option is Comics (cap C)
@@ -92,9 +99,18 @@ class DefaultCommand extends Command
 
         $io->newLine();
 
+        $character_id = $this->connector->searchForCharacter($input->getArgument('character'));
+        if($character_id === false)
+            {
+                $io->newLine();
+                $io->warning("Character name not located, please try again");
+                $this->run(new ArrayInput(array()), $output);
+                return;
+            }
+
         $progress = new ProgressBar($output);
         $progress->setFormat(' %bar%');
-        $progress->setProgressCharacter("\xF0\x9F\x95\xB5");
+        $progress->setProgressCharacter("\xF0\x9F\x95\xB7");
         $progress->start();
 
         for ($i = 0; $i < 10; $i++)
@@ -105,6 +121,23 @@ class DefaultCommand extends Command
 
         $progress->finish();
 
+        $io->newLine(2);
+
+        if($io->confirm('Retrieved 40 records, would you like to save them to a CSV document?', true))
+            {
+                $io->newLine();
+                $filename = $io->ask('Please enter a filename', $input->getArgument('character').'_'.ucfirst($input->getArgument('type')).'.csv');
+
+                $io->success('File saved!');
+            }
+
         $io->newLine();
+        if($io->confirm('Would you like to perform a new search?', true))
+            $this->run(new ArrayInput(array()), $output);
+        else
+            {
+                $io->newLine();
+                $io->section(' Thank you for using the Continuum Comics Marvel API searcher! ');
+            }
     }
 }

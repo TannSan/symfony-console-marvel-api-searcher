@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace MarvelConsole\Connector;
 
@@ -53,7 +53,7 @@ class MarvelConnector implements ConnectorInterface
     {
         if($this->last_response && strpos($this->last_response->getHeaders()["Content-Type"][0], 'application/json') !== false)
             return json_decode($this->last_response->getBody())->message;
-        
+
         return false;
     }
 
@@ -67,9 +67,15 @@ class MarvelConnector implements ConnectorInterface
         if($character_name != "")
             {
                 $this->last_response = $this->client->request('GET', 'characters?name='.$character_name.$this->generateAPIAuth(), ['http_errors' => false]);
-                return $this->last_response;
+
+                if($this->last_response->getStatusCode() == 200)
+                    {
+                        $results = json_decode($this->last_response->getBody())->data->results;
+                        if(count($results) > 0)
+                            return $results[0]->id;
+                    }
             }
 
         return false;
-    }    
+    }
 }

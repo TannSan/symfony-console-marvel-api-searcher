@@ -3,20 +3,27 @@ This PHP appliction uses the Symfony console to search the Marvel API for comics
 
 Access to the Marvel API is free and requires registration with your email address: https://developer.marvel.com/
 
-##### Usage
+## Usage
+The syntax is:
+```
+php console.php [Character Name] [Data Type]
+```
+
 At the command line in the project root direction:
 
-php console.php [Character Name] [Data Type]
-
-Example: php console.php Spider-man events
+```
+php console.php Spider-man Events
+```
 
 Data Type can be:
-* comics
-* events
-* series
-* stories
+* Comics
+* Events
+* Series
+* Stories
 
-##### Unit Tests
-Can be run with: vendor\bin\simple-phpunit.bat
-
-[Data provided by Marvel. © 2014 Marvel](http://marvel.com)
+## Unit Tests
+Unit tests can be run with the following command from the project root directory (Windows):
+```
+vendor\bin\simple-phpunit.bat
+```
+[Data provided by Marvel. © 2018 MARVEL](http://marvel.com)
