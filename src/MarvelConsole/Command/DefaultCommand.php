@@ -7,9 +7,17 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use MarvelConsole\Connector\ConnectorInterface;
 
 class DefaultCommand extends Command
 {
+    private $connector;
+
+    public function setConnector(ConnectorInterface $connector)
+    {
+        $this->connector = $connector;
+    }
+    
     protected function configure()
     {
         $this->setName('marvel:search')
@@ -23,7 +31,7 @@ class DefaultCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $io->newLine();
-        $io->title(' Welcome to the Continuum Comics Marvel API CSV generator ');
+        $io->title(sprintf(' Welcome to the Continuum Comics %s CSV generator ', $this->connector->getName()));
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

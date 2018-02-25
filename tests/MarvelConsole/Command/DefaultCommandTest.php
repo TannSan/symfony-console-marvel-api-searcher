@@ -6,6 +6,7 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Exception\RuntimeException;
 use MarvelConsole\Command\DefaultCommand;
+use MarvelConsole\Connector\MarvelConnector;
 
 class DefaultCommandTest extends TestCase
 {
@@ -15,6 +16,7 @@ class DefaultCommandTest extends TestCase
     {
         $this->command = new DefaultCommand();
         $this->command->setApplication(new Application());
+        $this->command->setConnector(new MarvelConnector());
     }
 
     public function tearDown() {

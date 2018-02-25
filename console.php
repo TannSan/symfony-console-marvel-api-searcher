@@ -9,12 +9,14 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Dotenv\Dotenv;
 use MarvelConsole\Command\DefaultCommand;
+use MarvelConsole\Connector\MarvelConnector;
 
-// TODO: Create new default console command
-// TODO: Implement PHP unit comamnd and guzzle/marvel tests
-// TODO: Create Marvel API guzzle connector
+// TODO: Complete Marvel API guzzle connector
+// TODO: Add more PHP Unit tests for new connector functions
 // TODO: Error handling for character and data type command line arguments
 // TODO: The Marvel Characters call returns a list of characters so could present it as a user selectable option
+//       - Update - I tried a few shared character names and the API seems to just return them as one character i.e. Iron Man, Thor, Marvel Boy
+//       - Needs more research/testing - https://screenrant.com/marvel-comics-heroes-same-names/
 // TODO: Check that they have entered a valid data type - comics, events, series and stories
 // TODO: Special handling for non-plurals e.g. user types "event" so it is renamed to "events" in Marvel API call
 // TODO: Display results in tabular format
@@ -42,7 +44,25 @@ if(!getenv('PUBLIC_KEY') || !getenv('PRIVATE_KEY'))
     return;
 }
 
+$marvel_connector = new MarvelConnector();
+$marvel_connector->initialise();
+
+// This is nice to have but it uses up one tick of the daily access rate limit
+/*
+if(!$marvel_connector->testConnectionAuth())
+{
+    $io = new SymfonyStyle(new StringInput(''), new ConsoleOutput());
+    $io->newLine();
+    $io->error(sprintf('The %s API authorisation failed.', $marvel_connector->getName()));
+    $message = $marvel_connector->getResponseMessage();
+    if($message)
+        $io->error($message);
+    return;
+}
+*/
+
 $command = new DefaultCommand();
+$command->setConnector($marvel_connector);
 
 $app = new Application("Continuum Comics Marvel API Searcher", "1.0");
 $app->add($command);
