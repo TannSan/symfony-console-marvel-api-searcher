@@ -59,8 +59,8 @@ class MarvelConnector implements ConnectorInterface
 
     /**
      * Search for a character.
-     * @string  The character name to search for
-     * Returns  The JSON response item (which could contain an error code) or false if the character name was not valid.
+     * @string  The character name to search for.
+     * Returns  The ID of the character or false if the character name was not valid.
      */
     public function searchForCharacter(string $character_name)
     {
@@ -74,6 +74,26 @@ class MarvelConnector implements ConnectorInterface
                         if(count($results) > 0)
                             return $results[0]->id;
                     }
+            }
+
+        return false;
+    }
+
+    /**
+     * Search for comics/events/series/stories based on the supplied character id and data type.
+     * @int     The character id.
+     * @string  The data type to search for, valid options are comics/events/series/stories.
+     * Returns  An array of results or false if none found.
+     */
+    public function searchForData(int $character_id, string $data_type)
+    {
+        $this->last_response = $this->client->request('GET', 'characters/'.$character_id.'/'.$data_type.'?limit=40'.$this->generateAPIAuth(), ['http_errors' => false]);
+
+        if($this->last_response->getStatusCode() == 200)
+            {
+                $results = json_decode($this->last_response->getBody())->data->results;
+                if(count($results) > 0)
+                    return $results;
             }
 
         return false;

@@ -8,16 +8,16 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Question\ChoiceQuestion;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Helper\Table;
 use MarvelConsole\Connector\ConnectorInterface;
 
 class DefaultCommand extends Command
 {
-    private $connector;
     private const DATA_TYPES = array('Comics', 'Events', 'Series', 'Stories');
     private const DATA_TYPES_LC = array('comics', 'events', 'series', 'stories');
     private $is_first_time = true;
+    private $connector;
 
     public function setConnector(ConnectorInterface $connector)
     {
@@ -63,12 +63,14 @@ class DefaultCommand extends Command
                 $input->setArgument('character', $character_name);
             }
 
+        // If they type "comic" or "event" instead of "comics" and "events" then append the "s"
         $data_type = strtolower($input->getArgument('type'));
         if($data_type && substr($data_type, -1) !== 's')
             $data_type .= 's';
 
         if(!$data_type || in_array($data_type, $this::DATA_TYPES_LC) === false)
             {
+                // Had to go with the ChoiceQuestion option instead of $io->choice so could use the setNormalize method so when they type comics it accepts it even though option is Comics (cap C)
                 $question = new ChoiceQuestion(' Please select a data type to retrieve', $this::DATA_TYPES, $this::DATA_TYPES[0]);
                 $question->setErrorMessage("\n\n [ERROR] Selection %s is not a valid choice\n");
                 $question->setNormalizer(function ($value) {
@@ -80,26 +82,26 @@ class DefaultCommand extends Command
                     return $value ? trim(ucfirst(strtolower($value))) : '';
                 });
                 $input->setArgument('type', strtolower($this->getHelper('question')->ask($input, $output, $question)));
-
-                /*
-                // Had to go with the ChoiceQuestion option above so could use the setNormalize method so when they type comics it accepts it even though option is Comics (cap C)
-                $data_type = $io->choice('Please select a data type to retrieve', array('Comics', 'Events', 'Series', 'Stories'), 'Comics');
-                $input->setArgument('type', $data_type);
-                */
             }
         else
             $input->setArgument('type', $data_type);
     }
 
+    /**
+     * This is where the bulk of the form generation is handled.
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $character_name = $input->getArgument('character');
+        $data_type = $input->getArgument('type');
+
         $io = new SymfonyStyle($input, $output);
 
-        $io->text(sprintf('Searching for %s that include %s, please wait...', strtolower($input->getArgument('type')), $input->getArgument('character')));
+        $io->text(sprintf('Searching for %s that include %s, please wait...', $data_type, $character_name));
 
         $io->newLine();
 
-        $character_id = $this->connector->searchForCharacter($input->getArgument('character'));
+        $character_id = $this->connector->searchForCharacter($character_name);
         if($character_id === false)
             {
                 $io->newLine();
@@ -107,37 +109,99 @@ class DefaultCommand extends Command
                 $this->run(new ArrayInput(array()), $output);
                 return;
             }
-
-        $progress = new ProgressBar($output);
-        $progress->setFormat(' %bar%');
-        $progress->setProgressCharacter("\xF0\x9F\x95\xB7");
-        $progress->start();
-
-        for ($i = 0; $i < 10; $i++)
-            {
-                usleep(50000);
-                $progress->advance();
-            }
-
-        $progress->finish();
-
-        $io->newLine(2);
-
-        if($io->confirm('Retrieved 40 records, would you like to save them to a CSV document?', true))
-            {
-                $io->newLine();
-                $filename = $io->ask('Please enter a filename', $input->getArgument('character').'_'.ucfirst($input->getArgument('type')).'.csv');
-
-                $io->success('File saved!');
-            }
-
-        $io->newLine();
-        if($io->confirm('Would you like to perform a new search?', true))
-            $this->run(new ArrayInput(array()), $output);
         else
             {
-                $io->newLine();
-                $io->section(' Thank you for using the Continuum Comics Marvel API searcher! ');
+                $search_results = $this->connector->searchForData($character_id, $data_type);
+                if($search_results === false)
+                    {
+                        $io->newLine();
+                        $io->warning(sprintf("There are no %s that include %s, please try again", $data_type, $character_name));
+                        $this->run(new ArrayInput(array()), $output);
+                        return;
+                    }
+                else
+                    {
+                        $data_type = ucfirst($data_type);
+                        $result_count = count($search_results);
+                        $formatted_results = array();
+                        $csv_results = array();
+                        $current_result;
+                        $date_formatted;
+
+                        // I did each as a seperate loop as an optimisation to avoid having 40 conditionals for each set of results to handle the unique date field for each data type
+                        switch($data_type)
+                            {
+                                case "Comics":
+                                    for($i = 0; $i < $result_count; $i++)
+                                        {
+                                            $current_result = $search_results[$i];
+                                            $date_formatted = strtok(array_column($current_result->dates, 'date', 'type')['onsaleDate'], 'T');
+                                            $formatted_results[] = array($character_name, $data_type, strip_tags($this->truncate($current_result->title, 50)), $date_formatted);
+                                            $csv_results[] = array($character_name, $data_type, strip_tags($current_result->title), strip_tags($current_result->description), $date_formatted);
+                                        }
+                                    break;
+                                case "Events":
+                                    for($i = 0; $i < $result_count; $i++)
+                                        {
+                                            $current_result = $search_results[$i];
+                                            $date_formatted = strtok($current_result->start, ' ');
+                                            $formatted_results[] = array($character_name, $data_type, strip_tags($this->truncate($current_result->title, 50)), $date_formatted);
+                                            $csv_results[] = array($character_name, $data_type, strip_tags($current_result->title), strip_tags($current_result->description), $date_formatted);
+                                        }
+                                    break;
+                                case "Series":
+                                    for($i = 0; $i < $result_count; $i++)
+                                        {
+                                            $current_result = $search_results[$i];
+                                            $formatted_results[] = array($character_name, $data_type, strip_tags($this->truncate($current_result->title, 50)), $current_result->startYear);
+                                            $csv_results[] = array($character_name, $data_type, strip_tags($current_result->title), strip_tags($current_result->description), $current_result->startYear);
+                                        }
+                                    break;
+                                default:
+                                    // Stories
+                                    for($i = 0; $i < $result_count; $i++)
+                                        {
+                                            $current_result = $search_results[$i];
+                                            $formatted_results[] = array($character_name, $data_type, strip_tags($this->truncate($current_result->title, 50)), 'N/A');
+                                            $csv_results[] = array($character_name, $data_type, strip_tags($current_result->title), strip_tags($current_result->description), 'N/A');
+                                        }
+                                    break;
+                            }
+
+                        $table = new Table($output);
+                        $table->setHeaders(array('Character', 'Data Type', 'Name', 'Date First Published'))->setRows($formatted_results);
+                        $table->setStyle('borderless');
+                        $table->render();
+
+                        $io->newLine(2);
+
+                        if($io->confirm(sprintf('Retrieved %d records, would you like to save them to a CSV document?', $result_count), true))
+                            {
+                                $io->newLine();
+                                $filename = $io->ask('Please enter a filename', $character_name.'_'.ucfirst($data_type).'.csv');
+
+                                $io->success('File saved!');
+                            }
+
+                        $io->newLine();
+                        if($io->confirm('Would you like to perform a new search?', true))
+                            $this->run(new ArrayInput(array()), $output);
+                        else
+                            {
+                                $io->newLine();
+                                $io->section(' Thank you for using the Continuum Comics Marvel API searcher! ');
+                            }
+                    }
             }
+    }
+
+    private function truncate(string $text, int $chars = 25)
+    {
+        if(strlen($text) > $chars)
+            {
+                $text = substr($text, 0, $chars);
+                $text .= '...';
+            }
+        return $text;
     }
 }
