@@ -11,7 +11,7 @@ use Symfony\Component\Dotenv\Dotenv;
 use MarvelConsole\Command\DefaultCommand;
 use MarvelConsole\Connector\MarvelConnector;
 
-// TODO: Add more PHP Unit tests for new connector functions
+// TODO: Add more PHP Unit tests for DefaultCommand and new connector functions
 // TODO: Make sure the quiet mode console option works --quiet
 // TODO: Display a quote from the chosen character
 // TODO: Implement auto-complete for character name (there is a console helper to help with that)
@@ -29,15 +29,13 @@ if(!getenv('PUBLIC_KEY') || !getenv('PRIVATE_KEY'))
 {
     $io = new SymfonyStyle(new StringInput(''), new ConsoleOutput());
     $io->newLine();
-    $io->error('You must set your public and private keys in the .env file.');
+    $io->error('You must set your Marvel API public and private keys in the .env file.');
     return;
 }
 
 $marvel_connector = new MarvelConnector();
-$marvel_connector->initialise();
 
 // This is nice to have but it uses up one tick of the daily access rate limit
-/*
 if(!$marvel_connector->testConnectionAuth())
 {
     $io = new SymfonyStyle(new StringInput(''), new ConsoleOutput());
@@ -48,7 +46,6 @@ if(!$marvel_connector->testConnectionAuth())
         $io->error($message);
     return;
 }
-*/
 
 $command = new DefaultCommand();
 $command->setConnector($marvel_connector);

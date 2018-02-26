@@ -10,20 +10,17 @@ class MarvelConnector implements ConnectorInterface
     private $client;
     private $last_response;
 
+    public function __construct()
+    {
+        $this->client = new \GuzzleHttp\Client(['base_uri' => 'https://gateway.marvel.com:443/v1/public/']);
+    }
+
     /**
      * Returns the API name.
      */
     public function getName()
     {
         return 'Marvel';
-    }
-
-    /**
-     * Create a single Guzzle client that will be re-used for all requests.
-     */
-    public function initialise()
-    {
-        $this->client = new \GuzzleHttp\Client(['base_uri' => 'https://gateway.marvel.com:443/v1/public/']);
     }
 
     /**
@@ -67,7 +64,6 @@ class MarvelConnector implements ConnectorInterface
         if($character_name != "")
             {
                 $this->last_response = $this->client->request('GET', 'characters?name='.$character_name.$this->generateAPIAuth(), ['http_errors' => false]);
-
                 if($this->last_response->getStatusCode() == 200)
                     {
                         $results = json_decode($this->last_response->getBody())->data->results;

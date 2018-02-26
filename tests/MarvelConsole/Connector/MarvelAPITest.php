@@ -12,7 +12,8 @@ class MarvelAPITest extends TestCase
         $this->client = new GuzzleHttp\Client(['base_uri' => 'https://gateway.marvel.com:443/v1/public/']);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         $this->client = null;
     }
 

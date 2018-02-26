@@ -30,17 +30,17 @@ class DefaultCommand extends Command
         $this->setName('marvel:search')
         ->setDescription('Retrieves records about characters from the Marvel universe.')
         ->setHelp('Retrieves records about characters from the Marvel universe.')
-        ->addArgument('character', InputArgument::REQUIRED, 'The Marvel character you wish to search for i.e. Spider-man')
+        ->addArgument('character', InputArgument::REQUIRED, 'The Marvel character you wish to search for e.g. Spider-man')
         ->addArgument('type', InputArgument::REQUIRED, 'The data type you wish to return.  Available choices are: comics / events / series / stories');
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $io = new SymfonyStyle($input, $output);
         if($this->is_first_time)
             {
+                $io = new SymfonyStyle($input, $output);
                 $io->newLine();
-                $io->title(sprintf(' Welcome to the Continuum Comics %s CSV generator ', $this->connector->getName()));
+                $io->title(sprintf(' Welcome to the %s ', $this->getApplication()->getName()));
                 $this->is_first_time = false;
             }
     }
@@ -64,20 +64,23 @@ class DefaultCommand extends Command
                 $input->setArgument('character', $character_name);
             }
 
-        // If they type "comic" or "event" instead of "comics" and "events" then append the "s"
+        // If they type "comic" or "event" instead of "comics" and "events" then be nice and append the "s"
         $data_type = strtolower($input->getArgument('type'));
         if($data_type && substr($data_type, -1) !== 's')
             $data_type .= 's';
 
         if(!$data_type || in_array($data_type, $this::DATA_TYPES_LC) === false)
             {
-                // Had to go with the ChoiceQuestion option instead of $io->choice so could use the setNormalize method so when they type comics it accepts it even though option is Comics (cap C)
+                // Had to go with the ChoiceQuestion option instead of $io->choice so could use the setNormalize method for two reasons
+                // 1) When they type comics it accepts it even though option is Comics (cap C)
+                // 2) ChoiceQuestion has a bug were you can't type 0 to select the first option as it's seen to be an empty string
+                //    I wrote a mini work-around for that
                 $question = new ChoiceQuestion(' Please select a data type to retrieve', $this::DATA_TYPES, $this::DATA_TYPES[0]);
                 $question->setErrorMessage("\n\n [ERROR] Selection %s is not a valid choice\n");
                 $question->setNormalizer(function ($value) {
                     if($value && !is_numeric($value) && substr($value, -1) !== 's')
                         $value .= 's';
-                    else if($value == "0")
+                    else if($value == '0')
                         $value = $this::DATA_TYPES[0];
 
                     return $value ? trim(ucfirst(strtolower($value))) : '';
@@ -190,7 +193,7 @@ class DefaultCommand extends Command
 
                                         if(file_exists($file_name))
                                             {
-                                                $option_1 = 'Choose a new filename';
+                                                $option_1 = 'Choose a new file name';
                                                 $option_2 = 'Overwrite it with the new data';
                                                 $option_3 = 'Append the new data to the end';
                                                 $file_option = $io->choice('That file already exists, what would you like to do?', array($option_1, $option_2, $option_3), $option_1);
@@ -229,7 +232,7 @@ class DefaultCommand extends Command
                         else
                             {
                                 $io->newLine();
-                                $io->section(' Thank you for using the Continuum Comics Marvel API searcher! ');
+                                $io->section(sprintf(' Thank you for using the %s! ', $this->getApplication()->getName()));
                             }
                     }
             }
