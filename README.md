@@ -1,15 +1,14 @@
 # symfony-console-marvel-api-searcher
-This PHP appliction uses the Symfony Console & Guzzle to search the Marvel API for comics, events, series and stories related to a character.  It gives you the option to export the to 40 results as a CSV file.  **Requires PHP 7.1.3 or greater.**
+This PHP appliction uses the Symfony Console & Guzzle to search the Marvel API for comics, events, series and stories related to a character.  It gives you the option to export the top 40 results as a CSV file.  **Requires PHP 7.1.3 or greater.**
 
-Access to the Marvel API is free and requires registration with your email address: https://developer.marvel.com/
+Access to the Marvel API is free but does require registration: https://developer.marvel.com
 
 [Data provided by Marvel. © 2018 MARVEL](http://marvel.com)
 
 ## Installation
 1. Clone this repository: `git clone https://github.com/TannSan/symfony-console-marvel-api-searcher.git`
-2. Create your .env file in the project root.
-...There is a template file included called `.env.example` which you can rename
-3. Set your Marvel API private and public keys in the .env file
+2. Create your `.env` file in the project root. There is a template file included called `.env.example` which you can rename
+3. Set your Marvel API private and public keys in the `.env` file. ([Get them here](https://developer.marvel.com/account) after you create your Marvel account)
 4. Download dependancies: `composer update`
 
 ## Usage
@@ -30,7 +29,7 @@ To have pretty colors on Windows:
 php console.php Spider-man Events --ansi
 ```
 
-#### Data Types:
+#### Data Types
 * Comics
 * Events
 * Series
