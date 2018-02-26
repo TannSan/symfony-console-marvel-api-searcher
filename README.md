@@ -35,7 +35,7 @@ Unit tests can be run with the following command from the project root directory
 vendor\bin\simple-phpunit.bat
 ```
 
-## Dependancies
+## Dependencies
 [symfony/console](https://github.com/symfony/console)
 [symfony/dotenv](https://github.com/symfony/dotenv)
 [symfony/phpunit-bridge](https://github.com/symfony/phpunit-bridge)
