@@ -7,8 +7,9 @@ Access to the Marvel API is free and requires registration with your email addre
 
 ## Installation
 1. Clone this repository: `git clone https://github.com/TannSan/symfony-console-marvel-api-searcher.git`
-2. Create your .env file in the project root.  There is a template file included called `.env.example`
-3. Set your private and public keys in the .env file
+2. Create your .env file in the project root.
+...There is a template file included called `.env.example` which you can rename
+3. Set your Marvel API private and public keys in the .env file
 4. Download dependancies: `composer update`
 
 ## Usage
@@ -29,7 +30,7 @@ To have pretty colors on Windows:
 php console.php Spider-man Events --ansi
 ```
 
-### Data Type can be:
+#### Data Types:
 * Comics
 * Events
 * Series
@@ -43,8 +44,8 @@ Linux: vendor/bin/simple-phpunit
 ```
 
 ## Dependencies
-[symfony/console](https://github.com/symfony/console)
-[symfony/dotenv](https://github.com/symfony/dotenv)
-[symfony/phpunit-bridge](https://github.com/symfony/phpunit-bridge)
-[guzzlehttp/guzzle v6](http://docs.guzzlephp.org)
-PHP Extension ext-mbstring (Only for PHPUnit testing)
+* [symfony/console](https://github.com/symfony/console)
+* [symfony/dotenv](https://github.com/symfony/dotenv)
+* [symfony/phpunit-bridge](https://github.com/symfony/phpunit-bridge)
+* [guzzlehttp/guzzle v6](http://docs.guzzlephp.org)
+* PHP Extension ext-mbstring (Only for PHPUnit testing)
