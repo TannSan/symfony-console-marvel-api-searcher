@@ -11,6 +11,7 @@ use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Helper\Table;
 use MarvelConsole\Connector\ConnectorInterface;
+use MarvelConsole\DataWriter\OutputToCSV;
 
 class DefaultCommand extends Command
 {
@@ -98,7 +99,6 @@ class DefaultCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $io->text(sprintf('Searching for %s that include %s, please wait...', $data_type, $character_name));
-
         $io->newLine();
 
         $character_id = $this->connector->searchForCharacter($character_name);
@@ -136,8 +136,8 @@ class DefaultCommand extends Command
                                         {
                                             $current_result = $search_results[$i];
                                             $date_formatted = strtok(array_column($current_result->dates, 'date', 'type')['onsaleDate'], 'T');
-                                            $formatted_results[] = array($character_name, $data_type, strip_tags($this->truncate($current_result->title, 50)), $date_formatted);
-                                            $csv_results[] = array($character_name, $data_type, strip_tags($current_result->title), strip_tags($current_result->description), $date_formatted);
+                                            $formatted_results[] = array($character_name, $data_type, $this->cleanOutputString($this->truncate($current_result->title, 50)), $date_formatted);
+                                            $csv_results[] = array($character_name, $data_type, $this->cleanOutputString($current_result->title), $this->cleanOutputString($current_result->description), $date_formatted, '');
                                         }
                                     break;
                                 case "Events":
@@ -145,16 +145,16 @@ class DefaultCommand extends Command
                                         {
                                             $current_result = $search_results[$i];
                                             $date_formatted = strtok($current_result->start, ' ');
-                                            $formatted_results[] = array($character_name, $data_type, strip_tags($this->truncate($current_result->title, 50)), $date_formatted);
-                                            $csv_results[] = array($character_name, $data_type, strip_tags($current_result->title), strip_tags($current_result->description), $date_formatted);
+                                            $formatted_results[] = array($character_name, $data_type, $this->cleanOutputString($this->truncate($current_result->title, 50)), $date_formatted);
+                                            $csv_results[] = array($character_name, $data_type, $this->cleanOutputString($current_result->title), $this->cleanOutputString($current_result->description), $date_formatted, '');
                                         }
                                     break;
                                 case "Series":
                                     for($i = 0; $i < $result_count; $i++)
                                         {
                                             $current_result = $search_results[$i];
-                                            $formatted_results[] = array($character_name, $data_type, strip_tags($this->truncate($current_result->title, 50)), $current_result->startYear);
-                                            $csv_results[] = array($character_name, $data_type, strip_tags($current_result->title), strip_tags($current_result->description), $current_result->startYear);
+                                            $formatted_results[] = array($character_name, $data_type, $this->cleanOutputString($this->truncate($current_result->title, 50)), $current_result->startYear);
+                                            $csv_results[] = array($character_name, $data_type, $this->cleanOutputString($current_result->title), $this->cleanOutputString($current_result->description), $current_result->startYear, '');
                                         }
                                     break;
                                 default:
@@ -162,8 +162,8 @@ class DefaultCommand extends Command
                                     for($i = 0; $i < $result_count; $i++)
                                         {
                                             $current_result = $search_results[$i];
-                                            $formatted_results[] = array($character_name, $data_type, strip_tags($this->truncate($current_result->title, 50)), 'N/A');
-                                            $csv_results[] = array($character_name, $data_type, strip_tags($current_result->title), strip_tags($current_result->description), 'N/A');
+                                            $formatted_results[] = array($character_name, $data_type, $this->cleanOutputString($this->truncate($current_result->title, 50)), 'N/A');
+                                            $csv_results[] = array($character_name, $data_type, $this->cleanOutputString($current_result->title), $this->cleanOutputString($current_result->description), 'N/A', '');
                                         }
                                     break;
                             }
@@ -173,14 +173,54 @@ class DefaultCommand extends Command
                         $table->setStyle('borderless');
                         $table->render();
 
+                        $io->newLine();
+                        $io->text("Data provided by Marvel. © 2018 MARVEL");
                         $io->newLine(2);
 
                         if($io->confirm(sprintf('Retrieved %d records, would you like to save them to a CSV document?', $result_count), true))
                             {
-                                $io->newLine();
-                                $filename = $io->ask('Please enter a filename', $character_name.'_'.ucfirst($data_type).'.csv');
+                                $file_name_invalid = true;
+                                $file_name_suffix_int = 2;
+                                $file_name_suffix = '';
+                                $file_saved_successfully = false;
+                                while($file_name_invalid)
+                                    {
+                                        $io->newLine();
+                                        $file_name = $io->ask('Please enter a filename', $character_name.'_'.ucfirst($data_type).$file_name_suffix.'.csv');
 
-                                $io->success('File saved!');
+                                        if(file_exists($file_name))
+                                            {
+                                                $option_1 = 'Choose a new filename';
+                                                $option_2 = 'Overwrite it with the new data';
+                                                $option_3 = 'Append the new data to the end';
+                                                $file_option = $io->choice('That file already exists, what would you like to do?', array($option_1, $option_2, $option_3), $option_1);
+
+                                                switch($file_option)
+                                                    {
+                                                        case $option_1:
+                                                            $file_name_suffix = '_'.$file_name_suffix_int++;
+                                                            break;
+                                                        case $option_2:
+                                                            $file_saved_successfully = OutputToCSV::Write($file_name, $csv_results);
+                                                            $file_name_invalid = false;
+                                                            break;
+                                                        case $option_3:
+                                                            $file_saved_successfully = OutputToCSV::Write($file_name, $csv_results, 'a');
+                                                            $file_name_invalid = false;
+                                                            break;
+                                                    }
+                                            }
+                                        else
+                                            {
+                                                $file_saved_successfully = OutputToCSV::Write($file_name, $csv_results);
+                                                $file_name_invalid = false;
+                                            }
+                                    }
+
+                                if($file_saved_successfully)
+                                    $io->success('File saved!');
+                                else
+                                    $io->error('Error saving file!');
                             }
 
                         $io->newLine();
@@ -195,13 +235,28 @@ class DefaultCommand extends Command
             }
     }
 
-    private function truncate(string $text, int $chars = 25)
+    /**
+     * Strips HTML tags and newlines out of the provided text.
+     * @string  The text to be cleaned.
+     */
+    private function cleanOutputString(string $text = null)
     {
-        if(strlen($text) > $chars)
-            {
-                $text = substr($text, 0, $chars);
-                $text .= '...';
-            }
+        if(is_null($text))
+            return '';
+
+        return strip_tags(str_replace(array("\r", "\n"), ' ', $text));
+    }
+
+    /**
+     * Truncates text to the specified length.
+     * @string  The text to be truncated.
+     * @int     The length to truncate the string to.
+     */
+    private function truncate(string $text, int $max_length = 25)
+    {
+        if(strlen($text) > $max_length)
+            return substr($text, 0, $max_length - 3).'...';
+
         return $text;
     }
 }

@@ -11,27 +11,17 @@ use Symfony\Component\Dotenv\Dotenv;
 use MarvelConsole\Command\DefaultCommand;
 use MarvelConsole\Connector\MarvelConnector;
 
-// TODO: Complete Marvel API guzzle connector
 // TODO: Add more PHP Unit tests for new connector functions
-// TODO: The Marvel Characters call returns a list of characters so could present it as a user selectable option
-//       - Update - I tried a few shared character names and the API seems to just return them as one character i.e. Iron Man, Thor, Marvel Boy
-//       - Needs more research/testing - https://screenrant.com/marvel-comics-heroes-same-names/
-// TODO: Display results in tabular format
-// TODO: Clean user input for the url string
-// TODO: Error handling for if character does not exist in API
-// TODO: Include Marvel Copyright message with search results - "Data provided by Marvel. © 2014 Marvel"
-// TODO: Confirmation message for saving results to CSV
-// TODO: Output to CSV
-// TODO: Progress bar for fetching data
 // TODO: Make sure the quiet mode console option works --quiet
-// TODO: If file exists then prompt if they want to replace contents or append to them - fopen("filename.txt", w or a)
-// FUTURE TODO: Display a quote from the chosen character
-// FUTURE TODO: Imlplement Guzzle caching for faster results and less hits on the server: https://ourcodeworld.com/articles/read/538/how-to-create-a-psr-6-file-system-cache-for-guzzle-in-symfony-3
-// FUTURE TODO: Add results sort command line option
+// TODO: Display a quote from the chosen character
+// TODO: Implement auto-complete for character name (there is a console helper to help with that)
+// TODO: Imlplement Guzzle caching for faster results and less hits on the server: https://ourcodeworld.com/articles/read/538/how-to-create-a-psr-6-file-system-cache-for-guzzle-in-symfony-3
+// TODO: Implement the progress bar for while data is loading, can tie it into the Guzzle progress
+// TODO: Add results sort command line option
+// TODO: Add results limit command line option - maximum number of results to pull - 100 is max
+// TODO: Add offset option so can download multiple pages of data
 
 // Load in our Marvel API keys from the .env file in the project root
-// $public_API_key = getenv('PUBLIC_KEY');
-// $private_API_key = getenv('PRIVATE_KEY');
 $dotenv = new Dotenv();
 $dotenv->load(__DIR__.'/.env');
 
